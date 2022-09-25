@@ -1,11 +1,14 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:strawberry/ui/straw_theme.dart';
+import 'package:strawberry/ui/tools/dimensions.dart';
 
 class HomePageGraph extends StatefulWidget {
   final List<FlSpot> data;
+  final Dimensions dimensions;
 
-  const HomePageGraph({Key? key, required this.data}) : super(key: key);
+  const HomePageGraph({Key? key, required this.data, required this.dimensions})
+      : super(key: key);
 
   @override
   _HomePageGraphState createState() => _HomePageGraphState();
@@ -20,8 +23,6 @@ class _HomePageGraphState extends State<HomePageGraph> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
-      height: 150,
       child: LineChart(
         mainData(),
         swapAnimationDuration: Duration(milliseconds: 1000), // Optional

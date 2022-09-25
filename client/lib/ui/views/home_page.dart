@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:eventify/eventify.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:strawberry/core/events/WebSocketEvents.dart';
 import 'package:strawberry/core/managers/WSManager.dart';
 import 'package:strawberry/core/repositories/UserApiRepository.dart';
 import 'package:strawberry/main.dart';
@@ -24,11 +25,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<dynamic> _cpuUsage = [0];
-  List<dynamic> _cpuTemp = [
-    0,
-  ];
+  List<dynamic> _cpuTemp = [0];
   List<FlSpot> _cpuUsageSpots = [];
   int _processes = 0;
+  List<dynamic> _services = [];
+  late Dimensions dimensions;
   // On init
   @override
   void initState() {
@@ -43,12 +44,21 @@ class _HomePageState extends State<HomePage> {
             _cpuUsageSpots.length.toDouble(), _cpuUsage.last.toDouble() * 100));
       });
     });
+    eventBus.on<UpdatedServicesEvent>().listen((event) {
+      setState(() {
+        //_services = event.data;
+        // before remove .service from the service name
+        _services = event.data.map((e) {
+          return {...e, 'name': e['name'].replaceAll('.service', '')};
+        }).toList();
+      });
+    });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    Dimensions dimensions = Dimensions(context);
+    dimensions = Dimensions(context);
     return DefaultLayout(
         child: Column(
       children: [
@@ -61,12 +71,14 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
+                      width: dimensions.getVW(20, 70, 150),
+                      height: dimensions.getVW(20, 70, 150),
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
                           color: StrawTheme.c5),
-                      child: _graph(_cpuUsageSpots),
+                      child: _graph(_cpuUsageSpots, dimensions),
                     ),
-                    SizedBox(width: dimensions.getVW(05, 10, 50)),
+                    SizedBox(width: dimensions.getVW(05, 10)),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -81,7 +93,36 @@ class _HomePageState extends State<HomePage> {
                       ],
                     )
                   ],
-                )))
+                ))),
+        createCard(
+          'Services',
+          Column(
+            children: [
+              for (var service in _services)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      flex: 3,
+                      child: Text(service['name'],
+                          overflow: TextOverflow.ellipsis,
+                          style: StrawTheme.h4(context)),
+                    ),
+                    Flexible(
+                      flex: 2,
+                      child: Text(
+                        service['active'],
+                        style: StrawTheme.h4(context).copyWith(
+                            color: service['active'] == 'active'
+                                ? StrawTheme.cSuccess
+                                : StrawTheme.cError),
+                      ),
+                    ),
+                  ],
+                )
+            ],
+          ),
+        ),
       ],
     ));
   }
@@ -93,21 +134,24 @@ class _HomePageState extends State<HomePage> {
           color: StrawTheme.c4,
           child: Padding(
             padding: const EdgeInsets.all(15),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          color: StrawTheme.cText1, fontSize: 25)),
-                  const SizedBox(height: 20),
-                  child
-                ]),
+            child: Container(
+              width: dimensions.getVW(100, null, 600),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            color: StrawTheme.cText1, fontSize: 25)),
+                    const SizedBox(height: 20),
+                    child
+                  ]),
+            ),
           ),
         ));
   }
 
-  Widget _graph(List<FlSpot> data) {
-    return HomePageGraph(data: data);
+  Widget _graph(List<FlSpot> data, Dimensions dimensions) {
+    return HomePageGraph(data: data, dimensions: dimensions);
   }
 }

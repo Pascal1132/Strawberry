@@ -12,6 +12,11 @@ class StrawTheme {
 
   static const Color cText1 = Color.fromARGB(255, 255, 255, 255);
 
+  // Success color
+  static const Color cSuccess = Color.fromARGB(255, 0, 255, 0);
+  // Error color
+  static const Color cError = Color.fromARGB(255, 255, 0, 0);
+
   static Color getShade(Color color, {bool darker = false, double value = .1}) {
     assert(value >= 0 && value <= 1);
 
@@ -44,6 +49,6 @@ class StrawTheme {
     return TextStyle(
         color: StrawTheme.cText1,
         overflow: TextOverflow.ellipsis,
-        fontSize: dimensions.getVW(05, 10, 30));
+        fontSize: dimensions.getVW(04, 10, 30));
   }
 }

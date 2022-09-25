@@ -1,3 +1,4 @@
+import 'package:strawberry/core/events/WebSocketEvents.dart';
 import 'package:strawberry/core/models/WSMessage.dart';
 import 'package:strawberry/main.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -20,6 +21,8 @@ class WSManager extends EventEmitter {
     }, onDone: () {
       // Set timer to retry in 5s
       print('Server closed connection retrying in 5s');
+      eventBus
+          .fire(WebSocketConnectionEvent('Unable to connect to server', false));
       Future.delayed(const Duration(seconds: 5), () {
         open();
       });
@@ -31,13 +34,14 @@ class WSManager extends EventEmitter {
       case 'cpuInfos':
         eventBus.fire(UpdatedCpuInfosEvent(message.data));
         break;
+      case 'services':
+        eventBus.fire(UpdatedServicesEvent(message.data));
+        break;
+      case 'welcome':
+        eventBus.fire(WebSocketConnectionEvent('Back online', true));
+        break;
       default:
         print('Unknown message tag');
     }
   }
-}
-
-class UpdatedCpuInfosEvent {
-  final data;
-  UpdatedCpuInfosEvent(this.data);
 }

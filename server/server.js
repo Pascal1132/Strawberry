@@ -16,6 +16,7 @@ runtimeCache.cpuUsage = [];
 runtimeCache.cpuTemp = [];
 runtimeCache.processes = 0;
 runtimeCache.wsClients = [];
+runtimeCache.services = [];
 
 const toClient = (client, tag, data) => {
    client.send(JSON.stringify({
@@ -23,6 +24,37 @@ const toClient = (client, tag, data) => {
       data
    }));
 }
+
+const fetchServices = () => {
+   return new Promise((resolve, reject) => {
+      exec('systemctl list-units --type=service', (err, stdout, stderr) => {
+         if (err) {
+            reject(err);
+         } else {
+            runtimeCache.services = stdout.split(os.EOL).slice(1).map((line) => {
+               const splitted = line.split(/\s+/);
+               // if splitted 2 or 3 is undefined, then it's not a service
+               if (splitted[2] === undefined || splitted[3] === undefined) {
+                  return null;
+               }
+               return {
+                  name: splitted[1],
+                  load: splitted[2],
+                  active: splitted[3],
+                  description: splitted[4]
+               };
+            });
+            // Remove all values after the first null
+            const index = runtimeCache.services.indexOf(null);
+            if (index > -1) {
+               runtimeCache.services = runtimeCache.services.slice(0, index);
+            }
+            resolve(runtimeCache.services);
+         }
+      });
+   });
+}
+
 
 const sentToClient = () => {
    osUtils.cpuUsage((v) => {
@@ -50,13 +82,21 @@ setInterval(function () {
    sentToClient();
 }, 500);
 
-
+setInterval(async function () {
+   fetchServices();
+   for (let i = 0; i < runtimeCache.wsClients.length; i++) {
+      const client = runtimeCache.wsClients[i];
+      toClient(client, 'services', runtimeCache.services);
+   }
+}, 5000);
 
 // Creating connection using websocket
 wss.on("connection", ws => {
    // Add client to the list
    runtimeCache.wsClients.push(ws);
    console.log("new client connected");
+   // Send the current data to the client
+   toClient(ws, 'welcome', { message: 'Welcome to the server' });
    // sending message
    ws.on("message", data => {
       console.log(`Client has sent us: ${data}`)

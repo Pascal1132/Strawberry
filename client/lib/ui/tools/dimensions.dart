@@ -10,7 +10,7 @@ class Dimensions {
     width = MediaQuery.of(context).size.width;
   }
 
-  getVW(double percentage, double? min, double? max) {
+  getVW(double percentage, [double? min, double? max]) {
     double calculated = width * (percentage / 100);
     if (min != null && calculated < min) {
       return min;
@@ -21,7 +21,7 @@ class Dimensions {
     return calculated;
   }
 
-  getVH(double percentage, double? min, double? max) {
+  getVH(double percentage, [double? min, double? max]) {
     double calculated = height * (percentage / 100);
     if (min != null && calculated < min) {
       return min;
