@@ -37,11 +37,8 @@ class _SettingsPageState extends State<SettingsPage> {
       leftWidget: Button(
         text: null,
         icon: const Icon(Icons.arrow_back),
-        onPressed: () async {
-          setState(() {
-            PersistentStorageManager.set('serverIp', serverIp.text);
-          });
-          eventBus.fire(ServerAddressIpUpdatedEvent(serverIp.text));
+        onPressed: () {
+          Navigator.of(context).pop();
         },
         style: ButtonStyle(
           backgroundColor: MaterialStateProperty.all(Colors.transparent),
@@ -57,6 +54,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Padding(
         padding: const EdgeInsets.all(15),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             // Input text field for the server address
             DecoratedBox(
@@ -76,7 +74,26 @@ class _SettingsPageState extends State<SettingsPage> {
                     // font size of 15 and color of c0 for the value of the text field
                     labelStyle: TextStyle(color: StrawTheme.c0)),
               ),
-            )
+            ),
+            const SizedBox(
+              height: 25,
+            ),
+            Button(
+                text: 'Save',
+                icon: const Icon(
+                  Icons.save,
+                  color: StrawTheme.c2,
+                ),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(StrawTheme.c4),
+                  foregroundColor: MaterialStateProperty.all(StrawTheme.c2),
+                  padding: MaterialStateProperty.all(
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 10)),
+                ),
+                onPressed: () async {
+                  PersistentStorageManager.set('serverIp', serverIp.text);
+                  eventBus.fire(ServerAddressIpUpdatedEvent(serverIp.text));
+                })
           ],
         ),
       ),

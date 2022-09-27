@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:strawberry/core/events/WebSocketEvents.dart';
 import 'package:strawberry/core/managers/WSManager.dart';
 import 'package:strawberry/ui/straw_theme.dart';
 import 'package:strawberry/ui/views/home_page.dart';

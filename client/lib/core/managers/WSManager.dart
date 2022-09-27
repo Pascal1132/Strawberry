@@ -13,7 +13,6 @@ class WSManager extends EventEmitter {
   static const throwBackUrl = 'ws://localhost:8080';
   List<StreamSubscription> subscriptions = [];
   String serverIp = throwBackUrl;
-  bool forcedReloading = false;
   open({fetchServerIp = true}) async {
     if (fetchServerIp) {
       serverIp = await PersistentStorageManager.get('serverIp') ?? throwBackUrl;
@@ -39,14 +38,12 @@ class WSManager extends EventEmitter {
     }, onError: (error) {
       print('error: $error');
     }, onDone: () {
-      if (!forcedReloading) {
-        print('Server closed connection retrying in 5s');
-        eventBus.fire(
-            WebSocketConnectionEvent('Unable to connect to server', false));
-        Future.delayed(const Duration(seconds: 5), () {
-          open(fetchServerIp: false);
-        });
-      }
+      print('Server closed connection retrying in 5s');
+      eventBus
+          .fire(WebSocketConnectionEvent('Unable to connect to server', false));
+      Future.delayed(const Duration(seconds: 5), () {
+        open(fetchServerIp: false);
+      });
     });
 
     /// Send data to the server
@@ -60,11 +57,8 @@ class WSManager extends EventEmitter {
 
     subscriptions
         .add(eventBus.on<ServerAddressIpUpdatedEvent>().listen((event) async {
-      forcedReloading = true;
-      await channel.sink.close();
-      forcedReloading = false;
       serverIp = event.ip;
-      await open(fetchServerIp: false);
+      await channel.sink.close();
     }));
   }
 

@@ -32,17 +32,12 @@ class _DefaultLayoutState extends State<DefaultLayout> {
     _connectionSubscription =
         eventBus.on<WebSocketConnectionEvent>().listen((event) {
       if (!mounted) {
-        _connectionSubscription.cancel();
         return;
       }
       setState(() {
         // if the state changes, display a toast
         if (event.success != _connected) {
           _connected = event.success;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(event.message),
-            backgroundColor: _connected ? Colors.green : Colors.red,
-          ));
         }
       });
     });
@@ -101,8 +96,11 @@ class _DefaultLayoutState extends State<DefaultLayout> {
                   Row(children: [
                     widget.leftWidget ??
                         Icon(
-                          (_connected ? null : Icons.mobiledata_off),
-                          color: StrawTheme.cError,
+                          (_connected
+                              ? Icons.signal_cellular_alt
+                              : Icons
+                                  .signal_cellular_connected_no_internet_4_bar),
+                          color: (_connected ? Colors.green : Colors.red),
                           size: 30.0,
                         ),
                     const SizedBox(width: 5),
@@ -118,5 +116,11 @@ class _DefaultLayoutState extends State<DefaultLayout> {
             ),
           ),
         ));
+  }
+
+  @override
+  void dispose() {
+    _connectionSubscription.cancel();
+    super.dispose();
   }
 }
