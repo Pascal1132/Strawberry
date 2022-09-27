@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const fs = require("fs");
+require('dotenv').config();
 const os = require("os");
 const osUtils = require('os-utils');
 const exec = require('child_process').exec;
@@ -9,6 +10,9 @@ const si = require('systeminformation');
 const WebSocketServer = require('ws');
 const MessageHandler = require('./message_handler');
 const pm2Instance = require('./pm2');
+const NodeRSA = require('node-rsa');
+
+const key = new NodeRSA(process.env.SERVER_RSA_PRIVATE_KEY);
 
 // Creating a new websocket server
 const wss = new WebSocketServer.Server({ port: 8080 })
@@ -17,7 +21,7 @@ const runtimeCache = {};
 runtimeCache.cpuUsage = [];
 runtimeCache.cpuTemp = [];
 runtimeCache.processes = 0;
-runtimeCache.wsClients = [];
+runtimeCache.validatedClients = [];
 runtimeCache.services = [];
 
 const toClient = (client, tag, data) => {
@@ -71,7 +75,7 @@ const sentToClient = () => {
          exec('ps -e | wc -l', (error, stdout, stderr) => {
             runtimeCache.processes = parseInt(stdout);
             const { cpuUsage, cpuTemp, processes } = runtimeCache;
-            wss.clients.forEach((client) => {
+            runtimeCache.validatedClients.forEach((client) => {
                toClient(client, 'cpuInfos', { cpuUsage, cpuTemp, processes });
             });
          });
@@ -82,7 +86,7 @@ const sentToClient = () => {
 setInterval(function () {
    sentToClient();
    pm2Instance.list().then((list) => {
-      wss.clients.forEach((client) => {
+      runtimeCache.validatedClients.forEach((client) => {
          toClient(client, 'pm2Infos', list);
       });
    });
@@ -91,27 +95,50 @@ setInterval(function () {
 // DISABLED FOR NOW
 /*setInterval(async function () {
    fetchServices();
-   for (let i = 0; i < runtimeCache.wsClients.length; i++) {
-      const client = runtimeCache.wsClients[i];
+   for (let i = 0; i < runtimeCache.validatedClients.length; i++) {
+      const client = runtimeCache.validatedClients[i];
       toClient(client, 'services', runtimeCache.services);
    }
 }, 5000);*/
 
 // Creating connection using websocket
 wss.on("connection", ws => {
-   // Add client to the list
-   runtimeCache.wsClients.push(ws);
-   console.log("new client connected");
+   // if after 2 seconds, the client is not validated, we close the connection
+   const timeout = setTimeout(() => {
+      if (!runtimeCache.validatedClients.includes(ws)) {
+         ws.close();
+      }
+   }, 2000);
    // Send the current data to the client
-   toClient(ws, 'welcome', { message: 'Welcome to the server' });
+   //toClient(ws, 'welcome', { message: 'Welcome to the server' });
    // sending message
    ws.on("message", async data => {
+      // If the client is not in the list, validate the key
+      if (runtimeCache.validatedClients.indexOf(ws) === -1) {
+         try {
+            if (data.toString() === process.env.SERVER_RSA_PUBLIC_KEY) {
+               runtimeCache.validatedClients.push(ws);
+               console.log('Client validated');
+               toClient(ws, 'welcome', { message: 'Welcome to the server' });
+            } else {
+               console.log('Client not validated');
+               ws.close();
+            }
+         } catch (e) {
+            console.log('Client not validated');
+            ws.close();
+         }
+         return false;
+      }
       console.log(`Client has sent us: ${data}`);
       console.log(await MessageHandler.handle(data, ws));
    });
    // handling what to do when clients disconnects from server
    ws.on("close", () => {
-      console.log("the client has disconnected");
+      if (runtimeCache.validatedClients.indexOf(ws) !== -1) {
+         runtimeCache.validatedClients.splice(runtimeCache.validatedClients.indexOf(ws), 1);
+         console.log("Client disconnected");
+      }
    });
    // handling client connection error
    ws.onerror = function () {

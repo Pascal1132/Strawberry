@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:strawberry/core/events/WebSocketEvents.dart';
 import 'package:strawberry/core/managers/WSManager.dart';
 import 'package:strawberry/ui/straw_theme.dart';
@@ -11,7 +12,8 @@ import 'package:event_bus/event_bus.dart';
 
 EventBus eventBus = EventBus();
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const Strawberry());
 }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:strawberry/core/events/WebSocketEvents.dart';
 import 'package:strawberry/core/managers/PersistentStorageManager.dart';
 import 'package:strawberry/core/models/WSMessage.dart';
@@ -29,6 +30,9 @@ class WSManager extends EventEmitter {
     final channel = WebSocketChannel.connect(
       Uri.parse(serverIp),
     );
+
+    // send dotenv.env['SERVER_RSA_PUB'] to server
+    channel.sink.add(dotenv.env['SERVER_RSA_PUB']);
 
     /// Listen for all incoming data
     channel.stream.listen((data) {
