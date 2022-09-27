@@ -17,6 +17,23 @@ class StrawTheme {
   // Error color
   static const Color cError = Color.fromARGB(255, 255, 0, 0);
 
+  //bgBtnC1
+  static const Color bgBtnC1 = StrawTheme.c4;
+  // fgBtnC1
+  static const Color fgBtnC1 = Color.fromARGB(255, 255, 255, 255);
+  // bgBtnC2
+  static const Color bgBtnC2 = StrawTheme.c2;
+  // fgBtnC2
+  static const Color fgBtnC2 = StrawTheme.c5;
+
+  // Hover color
+  static const Color cHover = Color.fromARGB(255, 255, 255, 255);
+
+  static const TextStyle t1 = TextStyle(
+    color: StrawTheme.cText1,
+    fontSize: 15,
+  );
+
   static Color getShade(Color color, {bool darker = false, double value = .1}) {
     assert(value >= 0 && value <= 1);
 

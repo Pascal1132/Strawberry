@@ -7,6 +7,8 @@ const exec = require('child_process').exec;
 const si = require('systeminformation');
 // Importing the required modules
 const WebSocketServer = require('ws');
+const MessageHandler = require('./message_handler');
+const pm2Instance = require('./pm2');
 
 // Creating a new websocket server
 const wss = new WebSocketServer.Server({ port: 8080 })
@@ -55,7 +57,6 @@ const fetchServices = () => {
    });
 }
 
-
 const sentToClient = () => {
    osUtils.cpuUsage((v) => {
       runtimeCache.cpuUsage.push(Math.round(v * 100) / 100);
@@ -80,15 +81,21 @@ const sentToClient = () => {
 // Timer each 5 seconds to get the CPU usage
 setInterval(function () {
    sentToClient();
+   pm2Instance.list().then((list) => {
+      wss.clients.forEach((client) => {
+         toClient(client, 'pm2Infos', list);
+      });
+   });
 }, 500);
 
-setInterval(async function () {
+// DISABLED FOR NOW
+/*setInterval(async function () {
    fetchServices();
    for (let i = 0; i < runtimeCache.wsClients.length; i++) {
       const client = runtimeCache.wsClients[i];
       toClient(client, 'services', runtimeCache.services);
    }
-}, 5000);
+}, 5000);*/
 
 // Creating connection using websocket
 wss.on("connection", ws => {
@@ -98,12 +105,13 @@ wss.on("connection", ws => {
    // Send the current data to the client
    toClient(ws, 'welcome', { message: 'Welcome to the server' });
    // sending message
-   ws.on("message", data => {
-      console.log(`Client has sent us: ${data}`)
+   ws.on("message", async data => {
+      console.log(`Client has sent us: ${data}`);
+      console.log(await MessageHandler.handle(data, ws));
    });
    // handling what to do when clients disconnects from server
    ws.on("close", () => {
-      console.log("the client has connected");
+      console.log("the client has disconnected");
    });
    // handling client connection error
    ws.onerror = function () {

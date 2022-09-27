@@ -3,7 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:strawberry/core/managers/WSManager.dart';
 import 'package:strawberry/ui/straw_theme.dart';
-import 'router.dart';
+import 'package:strawberry/ui/views/home_page.dart';
+import 'package:strawberry/ui/views/settings_page.dart';
 
 import 'package:event_bus/event_bus.dart';
 
@@ -33,9 +34,17 @@ class _StrawberryState extends State<Strawberry> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Strawberry',
       themeMode: ThemeMode.dark,
-      home: generateRoute(),
+      initialRoute: '/',
+      routes: generateRoutes(),
     );
   }
+}
+
+generateRoutes() {
+  return {
+    '/': (context) => const HomePage(),
+    '/settings': (context) => const SettingsPage(),
+  };
 }

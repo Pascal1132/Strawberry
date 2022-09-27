@@ -3,18 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:strawberry/ui/straw_theme.dart';
 import 'package:strawberry/ui/tools/dimensions.dart';
 
-class HomePageGraph extends StatefulWidget {
+class Graph extends StatefulWidget {
   final List<FlSpot> data;
   final Dimensions dimensions;
 
-  const HomePageGraph({Key? key, required this.data, required this.dimensions})
+  const Graph({Key? key, required this.data, required this.dimensions})
       : super(key: key);
 
   @override
-  _HomePageGraphState createState() => _HomePageGraphState();
+  _GraphState createState() => _GraphState();
 }
 
-class _HomePageGraphState extends State<HomePageGraph> {
+class _GraphState extends State<Graph> {
   List<Color> gradientColors = [
     StrawTheme.c1,
     StrawTheme.c3,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:strawberry/core/events/WebSocketEvents.dart';
 import 'package:strawberry/main.dart';
@@ -5,7 +7,16 @@ import 'package:strawberry/ui/straw_theme.dart';
 
 // Transform to Stateful Widget
 class DefaultLayout extends StatefulWidget {
-  const DefaultLayout({super.key, required this.child});
+  final Widget rightWidget;
+  final Widget? leftWidget;
+  final String title;
+
+  const DefaultLayout(
+      {super.key,
+      required this.child,
+      this.rightWidget = const SizedBox(),
+      this.leftWidget,
+      this.title = 'Strawberry'});
 
   final Widget child;
 
@@ -15,9 +26,15 @@ class DefaultLayout extends StatefulWidget {
 
 class _DefaultLayoutState extends State<DefaultLayout> {
   bool _connected = false;
+  late StreamSubscription _connectionSubscription;
   @override
   void initState() {
-    eventBus.on<WebSocketConnectionEvent>().listen((event) {
+    _connectionSubscription =
+        eventBus.on<WebSocketConnectionEvent>().listen((event) {
+      if (!mounted) {
+        _connectionSubscription.cancel();
+        return;
+      }
       setState(() {
         // if the state changes, display a toast
         if (event.success != _connected) {
@@ -81,16 +98,21 @@ class _DefaultLayoutState extends State<DefaultLayout> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Strawberry',
-                    style: TextStyle(color: StrawTheme.c0, fontSize: 25),
-                  ),
-                  Icon(
-                    (_connected ? null : Icons.mobiledata_off_outlined),
-                    color:
-                        (_connected ? StrawTheme.cSuccess : StrawTheme.cError),
-                    size: 30.0,
-                  )
+                  Row(children: [
+                    widget.leftWidget ??
+                        Icon(
+                          (_connected ? null : Icons.mobiledata_off),
+                          color: StrawTheme.cError,
+                          size: 30.0,
+                        ),
+                    const SizedBox(width: 5),
+                    Text(
+                      widget.title,
+                      style:
+                          const TextStyle(color: StrawTheme.c0, fontSize: 25),
+                    ),
+                  ]),
+                  widget.rightWidget
                 ],
               ),
             ),
